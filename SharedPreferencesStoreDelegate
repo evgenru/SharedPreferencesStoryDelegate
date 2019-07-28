@@ -1,0 +1,42 @@
+import android.content.Context
+import android.content.SharedPreferences
+import android.preference.PreferenceManager
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+
+class SharedPreferencesStoreDelegate<T>(val name: String, val default: T) : ReadWriteProperty<Any, T> {
+
+    @Inject
+    lateinit var context: Context
+    
+    init {
+       injects(this)
+    }
+    
+    private val sharedPreferences: SharedPreferences by lazy {
+        PreferenceManager.getDefaultSharedPreferences(context)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getValue(thisRef: Any, property: KProperty<*>): T {
+        return when (default) {
+            is Long -> sharedPreferences.getLong(name, default) as T
+            is Float -> sharedPreferences.getFloat(name, default) as T
+            is Int -> sharedPreferences.getInt(name, default) as T
+            is Boolean -> sharedPreferences.getBoolean(name, default) as T
+            is String -> sharedPreferences.getString(name, default) as T
+            else -> throw IllegalStateException()
+        }
+    }
+
+    override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
+        when (value) {
+            is Long -> sharedPreferences.edit().putLong(name, value).apply()
+            is Float -> sharedPreferences.edit().putFloat(name, value).apply()
+            is Int -> sharedPreferences.edit().putInt(name, value).apply()
+            is Boolean -> sharedPreferences.edit().putBoolean(name, value).apply()
+            is String -> sharedPreferences.edit().putString(name, value).apply()
+            else -> throw IllegalStateException()
+        }
+    }
+}
