@@ -1,0 +1,41 @@
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+
+class SharedPreferencesStoreDelegateList<T>(name: String, default: List<T>, val clazz: KClass<*>)
+    : ReadWriteProperty<Any, List<T>> {
+
+    private var storageString: String by SharedPreferencesStoreDelegate(name, listToString(default))
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getValue(thisRef: Any, property: KProperty<*>): List<T> {
+        return when (clazz) {
+            Long::class -> storageString.split(';').map { it.toLong() } as List<T>
+            Float::class -> storageString.split(';').map { it.toFloat() } as List<T>
+            Int::class -> storageString.split(';').map { it.toInt() } as List<T>
+            Boolean::class -> storageString.split(';').map { it.toBoolean() } as List<T>
+            String::class -> storageString.split(';').map { it.replace(REPLACED_CS, ";") } as List<T>
+            else -> throw IllegalStateException()
+        }
+    }
+
+    override fun setValue(thisRef: Any, property: KProperty<*>, value: List<T>) {
+        storageString = listToString(value)
+    }
+
+    private fun listToString(list: List<T>): String {
+        return when (clazz) {
+            Long::class -> list.joinToString(";")
+            Float::class -> list.joinToString(";")
+            Int::class -> list.joinToString(";")
+            Boolean::class -> list.joinToString(";")
+            String::class -> list.joinToString(";") { (it as String).replace(";", REPLACED_CS) }
+            else -> throw IllegalStateException()
+        }
+    }
+
+    companion object {
+        private const val REPLACED_CS = "*!*$*%@#$"
+    }
+
+}
