@@ -4,19 +4,12 @@ import android.preference.PreferenceManager
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class SharedPreferencesStoreDelegate<T>(val name: String, val default: T) : ReadWriteProperty<Any, T> {
+open class SharedPreferencesStoreDelegate<T>(val name: String, val default: T) : ReadWriteProperty<Any, T> {
 
-    @Inject
-    lateinit var context: Context
-    
-    init {
-       injects(this)
-    }
-    
     private val sharedPreferences: SharedPreferences by lazy {
-        PreferenceManager.getDefaultSharedPreferences(context)
+        MainApplication.getInstance().getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
     }
-
+    
     @Suppress("UNCHECKED_CAST")
     override fun getValue(thisRef: Any, property: KProperty<*>): T {
         return when (default) {
@@ -38,5 +31,9 @@ class SharedPreferencesStoreDelegate<T>(val name: String, val default: T) : Read
             is String -> sharedPreferences.edit().putString(name, value).apply()
             else -> throw IllegalStateException()
         }
+    }
+
+    companion object {
+        private const val SHARED_PREFERENCES_NAME = "StoreDelegate"
     }
 }
